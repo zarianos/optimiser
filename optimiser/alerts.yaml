@@ -1,0 +1,18 @@
+groups:
+- name: optimiser.rules
+  rules:
+  - alert: OptimiserRegression
+    expr: rate(optimiser_cumulative_w[15m]) < -1
+    for: 30m
+    labels: { severity: warning }
+    annotations:
+      summary: "Optimiser appears to increase power"
+      description: >
+        The cumulative energy-saved counter decreased over the last 30 min.
+  - alert: NodeHotspot
+    expr: instance:node_cpu_utilisation:ratio5m > 0.9
+    for: 10m
+    labels: { severity: critical }
+    annotations:
+      summary: "Node running hot"
+      description: "Consider triggering DEFRAGMENT action."

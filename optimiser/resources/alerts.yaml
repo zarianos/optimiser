@@ -1,0 +1,26 @@
+# PrometheusRule – drop into your monitoring namespace
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: optimiser-rules
+  labels: { role: optimiser, prometheus: k8s }
+spec:
+  groups:
+  - name: optimiser.rules
+    rules:
+    - alert: OptimiserRegression
+      expr: rate(optimiser_cumulative_w[30m]) < -0.5
+      for: 30m
+      labels: { severity: warning }
+      annotations:
+        description: >
+          Energy savings counter is decreasing – optimiser could be causing
+          regressions.
+        summary: "optimiser regression"
+    - alert: NodeHotspot
+      expr: instance:node_cpu_utilisation:ratio5m > 0.9
+      for: 10m
+      labels: { severity: critical }
+      annotations:
+        description: "Node running hot for 10 min – consider DEFRAGMENT."
+        summary: "K8s node CPU hotspot"

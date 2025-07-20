@@ -1,0 +1,42 @@
+{
+  "uid": "optimiser-energy",
+  "title": "Kubernetes Energy Optimiser",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Cluster Power (W)",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "sum(kepler_node_cpu_watts)", "legendFormat": "total" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Optimiser Savings (cumulative Wh)",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "integral(optimiser_cumulative_w/60)", "legendFormat": "Wh" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Last Action",
+      "datasource": "Prometheus",
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "expr": "optimiser_last_action_id", "legendFormat": "id" }
+      ]
+    },
+    {
+      "type": "heatmap",
+      "title": "CPU Util by Node",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "instance:node_cpu_utilisation:ratio5m", "legendFormat": "{{instance}}" }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "version": 1
+}

@@ -1,0 +1,102 @@
+# ───── Deployment: user-space optimiser ────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: optimiser
+  labels: { app: optimiser }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: optimiser } }
+  template:
+    metadata:
+      labels: { app: optimiser }
+    spec:
+      serviceAccountName: optimiser-sa
+      containers:
+      - name: optimiser
+        image: ghcr.io/you/optimiser:latest              # push with `docker buildx`
+        args:  ["python", "-m", "optimiser.main_async"]
+        env:
+        - { name: PROM_URL,            value: "http://prometheus-k8s.monitoring:9090" }
+        - { name: UPDATE_TIMESTEP,     value: "400" }
+        - { name: PPO_NUM_THREADS,     value: "2" }
+        - { name: PIN_CORES,           value: "0,1" }
+        ports:
+        - { name: metrics, containerPort: 9105 }
+        resources:
+          requests: { cpu: "200m", memory: "256Mi" }
+          limits:   { cpu: "500m", memory: "512Mi" }
+        securityContext:
+          allowPrivilegeEscalation: false
+
+---
+# ───── ServiceMonitor (Prometheus Operator) ───────────────
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata: { name: optimiser }
+spec:
+  selector: { matchLabels: { app: optimiser } }
+  endpoints:
+  - port: metrics
+    interval: 15s
+
+---
+# ───── ServiceAccount + RBAC (pods, nodes) ────────────────
+apiVersion: v1
+kind: ServiceAccount
+metadata: { name: optimiser-sa }
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata: { name: optimiser-role }
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/eviction", "nodes", "nodes/proxy"]
+  verbs: ["get", "list", "watch", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "statefulsets"]
+  verbs: ["get", "list", "watch", "patch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata: { name: optimiser-binding }
+subjects:
+- kind: ServiceAccount
+  name: optimiser-sa
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: optimiser-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# ───── DaemonSet: node-tuner for hardware knobs ───────────
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-tuner
+  labels: { app: node-tuner }
+spec:
+  selector: { matchLabels: { app: node-tuner } }
+  template:
+    metadata:
+      labels: { app: node-tuner }
+    spec:
+      hostPID:  true
+      hostIPC:  true
+      hostNetwork: true
+      serviceAccountName: optimiser-sa
+      containers:
+      - name: tuner
+        image: ghcr.io/you/node-tuner:latest
+        securityContext:
+          privileged: true            # needs /sys write
+        volumeMounts:
+        - { name: sys,  mountPath: /sys }
+        - { name: lib,  mountPath: /lib/modules, readOnly: true }
+        env:
+        - { name: DEFAULT_GOV, value: "powersave" }
+      volumes:
+      - { name: sys, hostPath: { path: /sys } }
+      - { name: lib, hostPath: { path: /lib/modules } }
