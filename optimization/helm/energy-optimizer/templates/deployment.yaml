@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "energy-optimizer.fullname" . }}
+  labels:
+    {{- include "energy-optimizer.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "energy-optimizer.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "energy-optimizer.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "energy-optimizer.serviceAccountName" . }}
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+        - name: PROMETHEUS_URL
+          value: {{ .Values.optimizer.prometheus.url }}
+        - name: DRY_RUN
+          value: "{{ .Values.optimizer.optimization.dryRun }}"
+        - name: OPTIMIZATION_STRATEGY
+          value: {{ .Values.optimizer.optimization.strategy }}
+        - name: MONITORING_INTERVAL
+          value: "{{ .Values.optimizer.intervals.monitoring }}"
+        - name: OPTIMIZATION_INTERVAL
+          value: "{{ .Values.optimizer.intervals.optimization }}"
+        - name: PREDICTION_INTERVAL
+          value: "{{ .Values.optimizer.intervals.prediction }}"
+        - name: ADVANCED_INTERVAL
+          value: "{{ .Values.optimizer.intervals.advanced }}"
+        ports:
+        - name: metrics
+          containerPort: 8080
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          initialDelaySeconds: 30
+          periodSeconds: 5
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+        volumeMounts:
+        - name: models
+          mountPath: /models
+        - name: config
+          mountPath: /config
+      volumes:
+      - name: models
+        {{- if .Values.persistence.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ include "energy-optimizer.fullname" . }}-models
+        {{- else }}
+        emptyDir: {}
+        {{- end }}
+      - name: config
+        configMap:
+          name: {{ include "energy-optimizer.fullname" . }}-config

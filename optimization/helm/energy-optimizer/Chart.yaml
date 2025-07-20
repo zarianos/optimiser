@@ -1,0 +1,19 @@
+apiVersion: v2
+name: energy-optimizer
+description: ML-based Kubernetes Energy Optimization System
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+home: https://github.com/yourorg/energy-optimizer
+icon: https://raw.githubusercontent.com/kubernetes/kubernetes/master/logo/logo.png
+keywords:
+  - energy
+  - optimization
+  - kubernetes
+  - ml
+  - sustainability
+maintainers:
+  - name: Your Name
+    email: your.email@example.com
+sources:
+  - https://github.com/yourorg/energy-optimizer

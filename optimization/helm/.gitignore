@@ -1,0 +1,26 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Helm
+*.tgz
+charts/*.tgz
+requirements.lock
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+.test/
+*/.git
+*/.git
+!.git

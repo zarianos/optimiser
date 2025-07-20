@@ -1,0 +1,11 @@
+Energy Optimizer has been installed!
+
+To check the status:
+  kubectl --namespace {{ .Release.Namespace }} get pods -l "app.kubernetes.io/instance={{ .Release.Name }}"
+
+To view logs:
+  kubectl --namespace {{ .Release.Namespace }} logs -l "app.kubernetes.io/instance={{ .Release.Name }}"
+
+To access metrics:
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "energy-optimizer.fullname" . }} 8080:8080
+  curl http://localhost:8080/metrics

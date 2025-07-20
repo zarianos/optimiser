@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "energy-optimizer.fullname" . }}-config
+  labels:
+    {{- include "energy-optimizer.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    optimization:
+      strategy: {{ .Values.optimizer.optimization.strategy }}
+      thresholds:
+        efficiency_min: {{ .Values.optimizer.thresholds.efficiency_min }}
+        scale_down: {{ .Values.optimizer.thresholds.scale_down }}
+        scale_up: {{ .Values.optimizer.thresholds.scale_up }}
+    intervals:
+      monitoring: {{ .Values.optimizer.intervals.monitoring }}
+      optimization: {{ .Values.optimizer.intervals.optimization }}
+      prediction: {{ .Values.optimizer.intervals.prediction }}
+      advanced: {{ .Values.optimizer.intervals.advanced }}

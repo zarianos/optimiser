@@ -1,0 +1,66 @@
+# Default values for energy-optimizer
+replicaCount: 1
+
+image:
+  repository: energy-optimizer
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+optimizer:
+  prometheus:
+    url: "http://prometheus.monitoring:9090"
+  
+  optimization:
+    enabled: true
+    dryRun: false
+    strategy: "balanced"
+    
+  intervals:
+    monitoring: 60
+    optimization: 600
+    prediction: 900
+    advanced: 3600
+  
+  thresholds:
+    efficiency_min: 0.5
+    scale_down: 0.3
+    scale_up: 0.8
+
+persistence:
+  enabled: true
+  existingClaim: ""
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 10Gi
+  annotations: {}
+
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    namespace: ""
+    interval: 30s
+    scrapeTimeout: 10s
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
